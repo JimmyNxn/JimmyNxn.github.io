@@ -1,0 +1,341 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>How to Make Your dbt Project's CI Efficient Without Reducing Test Coverage // NIXTRIX</title>
+<link rel="icon" href="data:," />
+<style>
+  @font-face{
+    font-family:'Press Start 2P';
+    font-style:normal;
+    font-weight:400;
+    font-display:swap;
+    src:url('../fonts/press-start-2p-latin.woff2') format('woff2');
+  }
+  @font-face{
+    font-family:'VT323';
+    font-style:normal;
+    font-weight:400;
+    font-display:swap;
+    src:url('../fonts/vt323-latin.woff2') format('woff2');
+  }
+  :root{
+    --orange-1:#ffb347;
+    --orange-2:#ffa500;
+    --orange-3:#ff8c00;
+    --orange-4:#ff6a00;
+    --orange-5:#ff4500;
+    --orange-dim:#3a1f00;
+    --bg:#050301;
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0;
+    padding:0;
+    background:var(--bg);
+    color:var(--orange-1);
+    font-family:'VT323', monospace;
+  }
+  .pixel-font{ font-family:'Press Start 2P', monospace; }
+  .wrap{
+    max-width:760px;
+    margin:0 auto;
+    padding:6vh 20px 10vh;
+  }
+  .back-link{
+    display:inline-block;
+    margin-bottom:32px;
+    color:var(--orange-3);
+    text-decoration:none;
+    letter-spacing:1px;
+    font-size:16px;
+  }
+  .back-link:hover{ color:var(--orange-2); }
+  .terminal{
+    border:3px solid var(--orange-4);
+    border-radius:10px;
+    box-shadow:0 0 0 3px #000, 0 0 30px rgba(255,120,0,0.15);
+    overflow:hidden;
+  }
+  .terminal-titlebar{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    padding:10px 14px;
+    background:linear-gradient(180deg, #4a2e12, #2a1a0c);
+    border-bottom:2px solid var(--orange-dim);
+  }
+  .terminal-titlebar .dot{ width:10px; height:10px; border-radius:50%; }
+  .terminal-titlebar .dot-1{background:var(--orange-5);}
+  .terminal-titlebar .dot-2{background:var(--orange-3);}
+  .terminal-titlebar .dot-3{background:var(--orange-1);}
+  .terminal-title{
+    margin-left:auto;
+    font-size:10px;
+    color:var(--orange-dim);
+    letter-spacing:1px;
+  }
+  .terminal-screen{
+    position:relative;
+    background:#050301;
+    padding:26px 26px 34px;
+    overflow:hidden;
+    box-shadow:
+      inset 0 0 2px 2px var(--orange-dim),
+      inset 0 0 50px rgba(255,110,0,0.12);
+  }
+  .post-header{
+    margin-bottom:28px;
+  }
+  h1.post-title{
+    font-size:clamp(22px, 4.4vw, 30px);
+    color:var(--orange-2);
+    letter-spacing:1px;
+    margin:0 0 10px;
+    line-height:1.3;
+    text-shadow:2px 2px 0 var(--orange-dim);
+  }
+  .post-meta{
+    font-size:16px;
+    color:var(--orange-3);
+    letter-spacing:1px;
+  }
+  article{
+    font-size:21px;
+    line-height:1.6;
+  }
+  article p{
+    margin:0 0 22px;
+  }
+  article strong{ color:var(--orange-2); }
+  article code{
+    font-family:'VT323', monospace;
+    font-size:1.05em;
+    color:var(--orange-2);
+    background:rgba(255,140,0,0.1);
+    padding:1px 6px;
+    border:1px solid var(--orange-dim);
+    border-radius:3px;
+  }
+  hr.rule{
+    border:none;
+    border-top:2px dashed var(--orange-dim);
+    margin:32px 0;
+  }
+  h2.section-title{
+    font-family:'Press Start 2P', monospace;
+    font-size:14px;
+    color:var(--orange-2);
+    letter-spacing:1px;
+    margin:36px 0 16px;
+  }
+  h2.section-title::before{ content:"> "; color:var(--orange-5); }
+  .summary{
+    background:rgba(255,140,0,0.06);
+    border:2px solid var(--orange-4);
+    border-radius:6px;
+    padding:18px 20px;
+    margin-bottom:32px;
+  }
+  .summary-label{
+    font-family:'Press Start 2P', monospace;
+    font-size:12px;
+    color:var(--orange-3);
+    letter-spacing:1px;
+    margin-bottom:10px;
+  }
+  .summary p{ margin:0; font-size:20px; }
+  article pre{
+    background:#0d0500;
+    border:1px solid var(--orange-dim);
+    border-radius:6px;
+    padding:16px 18px;
+    overflow-x:auto;
+    margin:0 0 22px;
+    font-size:18px;
+    line-height:1.5;
+    color:var(--orange-1);
+  }
+  article pre code{
+    background:none;
+    border:none;
+    padding:0;
+    color:inherit;
+    font-size:1em;
+  }
+  .cost-table{
+    width:100%;
+    border-collapse:collapse;
+    margin:0 0 22px;
+    font-size:19px;
+  }
+  .cost-table th, .cost-table td{
+    border:1px solid var(--orange-dim);
+    padding:8px 12px;
+    text-align:left;
+  }
+  .cost-table th{
+    color:var(--orange-2);
+    background:rgba(255,140,0,0.08);
+    font-size:15px;
+    letter-spacing:0.5px;
+  }
+  .cost-table td.num{ color:var(--orange-2); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <a class="back-link" href="../index.html">&lt; BACK TO ARCHIVE.LOG</a>
+
+  <div class="terminal">
+    <div class="terminal-titlebar">
+      <span class="dot dot-1"></span>
+      <span class="dot dot-2"></span>
+      <span class="dot dot-3"></span>
+      <span class="terminal-title pixel-font">POST-01</span>
+    </div>
+    <div class="terminal-screen">
+
+      <header class="post-header">
+        <h1 class="post-title pixel-font">HOW TO MAKE YOUR DBT PROJECT'S CI EFFICIENT WITHOUT REDUCING TEST COVERAGE</h1>
+        <div class="post-meta">2026-09-06</div>
+      </header>
+
+      <div class="summary">
+        <div class="summary-label">SUMMARY</div>
+        <p>
+          <code>--sample</code> shrinks a dbt run to a recent time window,
+          turning an expensive full-history CI job into pocket change. Great
+          for your warehouse bill, terrible for freshness and relationship
+          tests, which quietly start lying to you. The fix: keep sampled
+          runs for fast PR feedback, and route the full, unsampled test suite
+          through a separate orchestrated pipeline (here, Dagster) — then
+          gate the actual release branch on that full run passing, not the
+          sampled one.
+        </p>
+      </div>
+
+      <article>
+        <h2 class="section-title pixel-font">THE PROBLEM</h2>
+        <p>
+          Slim CI (<code>--select state:modified+</code>) already cuts most of
+          the waste out of dbt CI runs — you only build and test what changed
+          plus its downstream blast radius, compared against a stored manifest
+          from prod:
+        </p>
+        <pre><code>dbt build --select "state:modified+" --state ./prod-manifest</code></pre>
+        <p>
+          Great in theory. In practice, "only the modified subgraph" can
+          still mean rebuilding a fact table with three years of history
+          because one column got renamed. Your PR touched one line of SQL.
+          The warehouse did not care, and billed accordingly.
+        </p>
+
+        <h2 class="section-title pixel-font">HOW --SAMPLE WORKS</h2>
+        <p>
+          This is where <code>--sample</code> earns its keep. Tell dbt a
+          relative window and it quietly tacks on a time filter to any model
+          with an <code>event_time</code> column configured — same SQL, same
+          logic, a fraction of the bytes scanned:
+        </p>
+        <pre><code>dbt build --select "state:modified+" --state ./prod-manifest --sample="3 days"</code></pre>
+        <p>configured once per model, in the schema file:</p>
+        <pre><code>models:
+  - name: fct_orders
+    config:
+      event_time: order_created_at</code></pre>
+        <p>
+          On a warehouse that bills by bytes scanned, that's not a rounding
+          error. A model that normally reads eighteen months of history to
+          validate a one-line SQL change now reads three days of it, and the
+          difference shows up on the invoice, not just the stopwatch:
+        </p>
+        <table class="cost-table">
+          <tr><th>RUN</th><th>DATA SCANNED</th><th>APPROX. WAREHOUSE COST</th></tr>
+          <tr><td>Full history (18 months)</td><td class="num">~640 GB</td><td class="num">~$3.20 / run</td></tr>
+          <tr><td>Sampled (3-day window)</td><td class="num">~4 GB</td><td class="num">~$0.02 / run</td></tr>
+          <tr><td>× 40 PRs / week</td><td class="num">25.6 TB → 160 GB</td><td class="num">$128 → $0.80 / week</td></tr>
+        </table>
+        <p>
+          (Ballpark numbers for a mid-size warehouse — yours will differ, but
+          the shape of the curve won't: this scales with history, and history
+          only grows.)
+        </p>
+        <p>
+          Which is the part where sampling starts sounding too good to be
+          true. It is. Two test types find the catch immediately.
+        </p>
+
+        <h2 class="section-title pixel-font">WHERE IT BREAKS: FRESHNESS TESTS</h2>
+        <p>
+          Freshness tests measure how recent your source data is — max
+          <code>loaded_at</code> versus now. Sampling a downstream model
+          doesn't make the source fresher or staler; the check is answering
+          a question sampling has no opinion on. Best case it's a no-op that
+          wastes a CI cycle: worst case, someone reads a green freshness
+          check on a sampled run as "our data pipeline is current," and it
+          was never testing that in the first place.
+        </p>
+
+        <h2 class="section-title pixel-font">WHERE IT BREAKS: RELATIONSHIP TESTS</h2>
+        <p>
+          Relationship tests are the one that breaks quietly, and quietly is
+          worse than loudly. Say <code>fct_orders</code> and
+          <code>dim_customers</code> are both sampled independently to the
+          same 3-day window:
+        </p>
+        <pre><code>- name: fct_orders
+  columns:
+    - name: customer_id
+      tests:
+        - relationships:
+            to: ref('dim_customers')
+            field: customer_id</code></pre>
+        <p>
+          An order placed yesterday can reference a customer who signed up
+          four months ago. The order is in the sample window. The customer
+          isn't — their row's <code>event_time</code> falls well outside the
+          last three days, so their sampled slice never includes it. The
+          test fails. The data was never wrong. Multiply that across a real
+          DAG and slim+sampled CI starts crying wolf often enough that
+          people stop reading the alerts — which is the exact failure mode a
+          test suite exists to prevent.
+        </p>
+
+        <h2 class="section-title pixel-font">THE FIX: SPLIT FAST FROM FULL</h2>
+        <p>
+          The fix isn't "sample more carefully" — you can't out-clever a
+          join across two independently truncated windows. The fix is
+          admitting CI is being asked two different questions, and giving
+          each one its own answer:
+        </p>
+        <pre><code>PR pushed
+  └─ CI: dbt build --select "state:modified+" --sample="3 days"
+       (fast, cheap, answers: "does this SQL do what I think?")
+
+merge to main
+  └─ Dagster: full, unsampled run — freshness + relationships + everything
+       (slow, thorough, answers: "is this actually safe to ship?")
+
+release-please branch
+  └─ merge gate: waits on the Dagster run for this commit, not on PR CI</code></pre>
+        <p>
+          PR CI stays sampled and fast — minutes, not an hour, on every push.
+          The release-please branch doesn't take PR CI's word for it: its
+          merge check listens for the Dagster pipeline tied to that exact
+          commit to report success before it'll let the merge through. Green
+          PR tests get you reviewed and mergeable to main. Green Dagster run
+          is what actually unlocks a release. Nobody ships on a sampled run
+          alone, and nobody's blocked on a full warehouse scan just to get
+          feedback on a PR.
+        </p>
+      </article>
+
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
