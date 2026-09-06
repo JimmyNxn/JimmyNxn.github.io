@@ -1,0 +1,356 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Why I Use dlt Over Airbyte as a Data Engineer // NIXTRIX</title>
+<link rel="icon" href="data:," />
+<style>
+  @font-face{
+    font-family:'Press Start 2P';
+    font-style:normal;
+    font-weight:400;
+    font-display:swap;
+    src:url('../fonts/press-start-2p-latin.woff2') format('woff2');
+  }
+  @font-face{
+    font-family:'VT323';
+    font-style:normal;
+    font-weight:400;
+    font-display:swap;
+    src:url('../fonts/vt323-latin.woff2') format('woff2');
+  }
+  :root{
+    --orange-1:#ffb347;
+    --orange-2:#ffa500;
+    --orange-3:#ff8c00;
+    --orange-4:#ff6a00;
+    --orange-5:#ff4500;
+    --orange-dim:#3a1f00;
+    --bg:#050301;
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0;
+    padding:0;
+    background:var(--bg);
+    color:var(--orange-1);
+    font-family:'VT323', monospace;
+  }
+  .pixel-font{ font-family:'Press Start 2P', monospace; }
+  .wrap{
+    max-width:760px;
+    margin:0 auto;
+    padding:6vh 20px 10vh;
+  }
+  .back-link{
+    display:inline-block;
+    margin-bottom:32px;
+    color:var(--orange-3);
+    text-decoration:none;
+    letter-spacing:1px;
+    font-size:16px;
+  }
+  .back-link:hover{ color:var(--orange-2); }
+  .terminal{
+    border:3px solid var(--orange-4);
+    border-radius:10px;
+    box-shadow:0 0 0 3px #000, 0 0 30px rgba(255,120,0,0.15);
+    overflow:hidden;
+  }
+  .terminal-titlebar{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    padding:10px 14px;
+    background:linear-gradient(180deg, #4a2e12, #2a1a0c);
+    border-bottom:2px solid var(--orange-dim);
+  }
+  .terminal-titlebar .dot{ width:10px; height:10px; border-radius:50%; }
+  .terminal-titlebar .dot-1{background:var(--orange-5);}
+  .terminal-titlebar .dot-2{background:var(--orange-3);}
+  .terminal-titlebar .dot-3{background:var(--orange-1);}
+  .terminal-title{
+    margin-left:auto;
+    font-size:10px;
+    color:var(--orange-dim);
+    letter-spacing:1px;
+  }
+  .terminal-screen{
+    position:relative;
+    background:#050301;
+    padding:26px 26px 34px;
+    overflow:hidden;
+    box-shadow:
+      inset 0 0 2px 2px var(--orange-dim),
+      inset 0 0 50px rgba(255,110,0,0.12);
+  }
+  .post-header{
+    margin-bottom:28px;
+  }
+  h1.post-title{
+    font-size:clamp(22px, 4.4vw, 30px);
+    color:var(--orange-2);
+    letter-spacing:1px;
+    margin:0 0 10px;
+    line-height:1.3;
+    text-shadow:2px 2px 0 var(--orange-dim);
+  }
+  .post-meta{
+    font-size:16px;
+    color:var(--orange-3);
+    letter-spacing:1px;
+  }
+  article{
+    font-size:21px;
+    line-height:1.6;
+  }
+  article p{
+    margin:0 0 22px;
+  }
+  article strong{ color:var(--orange-2); }
+  article code{
+    font-family:'VT323', monospace;
+    font-size:1.05em;
+    color:var(--orange-2);
+    background:rgba(255,140,0,0.1);
+    padding:1px 6px;
+    border:1px solid var(--orange-dim);
+    border-radius:3px;
+  }
+  article ul{
+    margin:0 0 22px;
+    padding-left:26px;
+  }
+  article li{ margin-bottom:8px; }
+  h2.section-title{
+    font-family:'Press Start 2P', monospace;
+    font-size:14px;
+    color:var(--orange-2);
+    letter-spacing:1px;
+    margin:36px 0 16px;
+  }
+  h2.section-title::before{ content:"> "; color:var(--orange-5); }
+  .summary{
+    background:rgba(255,140,0,0.06);
+    border:2px solid var(--orange-4);
+    border-radius:6px;
+    padding:18px 20px;
+    margin-bottom:32px;
+  }
+  .summary-label{
+    font-family:'Press Start 2P', monospace;
+    font-size:12px;
+    color:var(--orange-3);
+    letter-spacing:1px;
+    margin-bottom:10px;
+  }
+  .summary p{ margin:0 0 14px; font-size:20px; line-height:1.55; }
+  .summary p:last-child{ margin-bottom:0; }
+  article pre{
+    background:#0d0500;
+    border:1px solid var(--orange-dim);
+    border-radius:6px;
+    padding:16px 18px;
+    overflow-x:auto;
+    margin:0 0 22px;
+    font-size:18px;
+    line-height:1.5;
+    color:var(--orange-1);
+  }
+  article pre code{
+    background:none;
+    border:none;
+    padding:0;
+    color:inherit;
+    font-size:1em;
+  }
+  .cmp-table{
+    width:100%;
+    border-collapse:collapse;
+    margin:0 0 22px;
+    font-size:18px;
+  }
+  .cmp-table th, .cmp-table td{
+    border:1px solid var(--orange-dim);
+    padding:8px 12px;
+    text-align:left;
+    vertical-align:top;
+  }
+  .cmp-table th{
+    color:var(--orange-2);
+    background:rgba(255,140,0,0.08);
+    font-size:14px;
+    letter-spacing:0.5px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <a class="back-link" href="../index.html">&lt; BACK TO ARCHIVE.LOG</a>
+
+  <div class="terminal">
+    <div class="terminal-titlebar">
+      <span class="dot dot-1"></span>
+      <span class="dot dot-2"></span>
+      <span class="dot dot-3"></span>
+      <span class="terminal-title pixel-font">POST-02</span>
+    </div>
+    <div class="terminal-screen">
+
+      <header class="post-header">
+        <h1 class="post-title pixel-font">WHY I USE DLT OVER AIRBYTE AS A DATA ENGINEER</h1>
+        <div class="post-meta">2026-09-06</div>
+      </header>
+
+      <div class="summary">
+        <div class="summary-label">SUMMARY</div>
+        <p>
+          Airbyte holds up for the demo. It struggles once pipelines get
+          real: internal APIs with drifting schemas, nested-loop endpoints,
+          anything custom — and debugging turns painful fast.
+        </p>
+        <p>
+          Since most teams run an orchestrator like Dagster or Airflow
+          anyway, dlt lets ingestion live there too: one codebase, one
+          place for logs, easy onboarding, nothing extra to self-host.
+        </p>
+        <p>
+          Airbyte still wins in one case: well-known third-party sources
+          only, and no Python-literate team.
+        </p>
+      </div>
+
+      <article>
+        <h2 class="section-title pixel-font">WHERE AIRBYTE STARTS TO HURT</h2>
+        <p>
+          Airbyte works great in the demo. It's the second month, once real
+          pipelines show up, where the cracks show:
+        </p>
+        <ul>
+          <li>
+            <strong>Logs that don't help you.</strong> When a sync fails,
+            the logs are often vague enough that debugging turns into
+            guesswork rather than reading a stack trace.
+          </li>
+          <li>
+            <strong>Internal APIs with schema drift.</strong> Third-party
+            APIs are stable and well-documented. Internal ones change shape
+            whenever another team ships something, and that's exactly where
+            Airbyte's connector model gets brittle.
+          </li>
+          <li>
+            <strong>Nested-loop and custom pipelines.</strong> The moment
+            you need to paginate through a list endpoint, then call a
+            detail endpoint per item, then paginate <em>that</em>, you're
+            fighting the low-code builder instead of writing the three
+            lines of Python that would have solved it directly.
+          </li>
+          <li>
+            <strong>Self-hosting.</strong> It works, until it doesn't, and
+            when it doesn't you're now debugging Airbyte's own
+            infrastructure on top of your pipeline.
+          </li>
+        </ul>
+
+        <h2 class="section-title pixel-font">WHY DLT WINS ONCE YOU HAVE ORCHESTRATION ANYWAY</h2>
+        <p>
+          Here's the thing almost every team running Airbyte already has:
+          Dagster or Airflow, because ingestion alone was never going to
+          cover transformation, scheduling, and dependencies. If an
+          orchestrator is already in the stack, ingestion may as well live
+          there too — and that's exactly what dlt is built for. A resource
+          is just a Python generator:
+        </p>
+        <pre><code>import dlt
+
+@dlt.resource(write_disposition="merge", primary_key="id")
+def orders(updated_at=dlt.sources.incremental("updated_at")):
+    for page in fetch_orders_since(updated_at.last_value):
+        yield page
+
+pipeline = dlt.pipeline(
+    pipeline_name="internal_orders",
+    destination="snowflake",
+    dataset_name="raw_orders",
+)
+pipeline.run(orders())</code></pre>
+        <p>
+          The nested-loop case that breaks a low-code builder is just a
+          nested generator here:
+        </p>
+        <pre><code>@dlt.resource
+def order_line_items():
+    for order in fetch_orders():
+        for item in fetch_line_items(order["id"]):
+            yield {**item, "order_id": order["id"]}</code></pre>
+        <p>
+          And schema drift on an internal API isn't a config screen you
+          hope handles it — dlt evolves the destination schema
+          automatically as new fields show up, and you can set a contract
+          when you want drift to fail loudly instead of silently:
+        </p>
+        <pre><code>@dlt.resource(schema_contract={"columns": "evolve", "data_type": "freeze"})
+def orders():
+    ...</code></pre>
+        <p>
+          Past the mechanics, the bigger win is organizational: pipelines,
+          transformations, and orchestration all live in one repo, in one
+          language, under one version control history. Logs are whatever
+          your orchestrator already surfaces, not a second system to learn.
+          Onboarding a new data engineer means reading Python they already
+          know, not learning a separate platform's quirks and self-hosting
+          setup on top of it. Validation is just code — assert what you
+          need, log what you want, exactly where you need it. Backfills are
+          a parameter, not a support ticket:
+        </p>
+        <pre><code>pipeline.run(orders(updated_at=dlt.sources.incremental(
+    "updated_at", initial_value="2024-01-01"
+)))</code></pre>
+
+        <h2 class="section-title pixel-font">THE CHERRY ON TOP</h2>
+        <p>
+          dlt even ships docs specifically for migrating off Airbyte, which
+          tells you something about how common this move already is. And
+          Airbyte's paid tier is, frankly, a lot of money for what you get
+          once you've priced out what the equivalent custom pipeline costs
+          in engineering time.
+        </p>
+
+        <h2 class="section-title pixel-font">WHERE AIRBYTE IS STILL THE RIGHT CALL</h2>
+        <p>
+          None of this makes Airbyte bad, it makes it a fit for a narrower
+          case than it's usually sold for: every source is a well-known
+          third-party connector, nothing custom or internal, and the team
+          has no Python-literate data engineers to maintain code-based
+          pipelines. In that specific setup, the low-code trade-off is the
+          right one.
+        </p>
+
+        <table class="cmp-table">
+          <tr><th></th><th>AIRBYTE</th><th>DLT</th></tr>
+          <tr><td>Debugging</td><td>Opaque logs, separate UI</td><td>Plain Python stack traces, in your orchestrator's logs</td></tr>
+          <tr><td>Internal APIs / schema drift</td><td>Brittle</td><td>Schema evolves (or fails loudly, your choice)</td></tr>
+          <tr><td>Nested / custom pipelines</td><td>Fighting the low-code builder</td><td>A nested generator</td></tr>
+          <tr><td>Hosting</td><td>Self-hosted infra to maintain, or pay for cloud</td><td>Runs inside orchestration you already run</td></tr>
+          <tr><td>Best fit</td><td>All well-known connectors, no Python engineers</td><td>Custom/internal sources, team already writes Python</td></tr>
+        </table>
+
+        <h2 class="section-title pixel-font">TAKEAWAY</h2>
+        <p>
+          If you're already running Dagster or Airflow, and your sources
+          are anything but a clean set of popular third-party APIs, dlt
+          means one codebase instead of two, one place to debug instead of
+          two, and one thing to onboard a new engineer onto instead of two.
+          Airbyte isn't wrong — it's just solving a problem you may not
+          actually have.
+        </p>
+      </article>
+
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

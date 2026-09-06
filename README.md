@@ -1,26 +1,13 @@
 # NixTrix
 
-A single-page, orange-on-black arcade-style blog. Intended to host short
-write-ups that get cross-posted to LinkedIn.
+A retro, terminal-styled blog of data engineering field notes — CI
+pipelines, dbt, orchestration, and whatever else comes out of the job that's
+worth writing down.
 
-Everything lives in `index.html` — no build step, just open the file or
-serve it as a static site (e.g. GitHub Pages).
+**Read it here: [jimmynxn.github.io](https://jimmynxn.github.io)**
 
-## Adding a new post
+No analytics, no tracking, no ads — just a static page with some posts on it.
 
-Edit the `posts` array near the top of the `<script>` block in
-`index.html`:
+## License
 
-```js
-const posts = [
-  {
-    title: "Your post title",
-    date: "2026-01-01",
-    url: "https://link-to-full-post",
-    excerpt: "One-line teaser."
-  },
-];
-```
-
-Newest entries should go first. If the array is empty, the page shows an
-"NO ENTRIES FOUND" placeholder instead.
+MIT — see [LICENSE](LICENSE).
