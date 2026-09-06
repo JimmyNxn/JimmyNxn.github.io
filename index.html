@@ -103,18 +103,14 @@
     0%,49%{opacity:1;}
     50%,100%{opacity:0.25;}
   }
-  .panel{
-    background:rgba(10,5,0,0.72);
-    border:3px solid var(--orange-3);
-    box-shadow:0 0 0 3px #000, 0 0 0 6px var(--orange-dim), 0 0 24px rgba(255,120,0,0.15);
-    padding:26px 24px;
-    margin-bottom:48px;
-  }
   .section-title{
     font-size:16px;
     color:var(--orange-2);
     margin:0 0 18px;
     letter-spacing:2px;
+  }
+  .section-title.archive-title{
+    margin-top:28px;
   }
   .section-title::before{
     content:"> ";
@@ -138,17 +134,35 @@
   .posts-list{
     list-style:none;
     margin:0;
-    padding:0;
+    padding:0 0 14px;
     display:flex;
-    flex-direction:column;
+    flex-direction:row;
     gap:16px;
+    overflow-x:auto;
+    overflow-y:hidden;
+    scroll-snap-type:x proximity;
+    scrollbar-color:var(--orange-4) var(--orange-dim);
+    scrollbar-width:thin;
+  }
+  .posts-list::-webkit-scrollbar{
+    height:8px;
+  }
+  .posts-list::-webkit-scrollbar-track{
+    background:var(--orange-dim);
+  }
+  .posts-list::-webkit-scrollbar-thumb{
+    background:var(--orange-4);
+    border-radius:4px;
   }
   .post-card{
-    display:block;
+    flex:0 0 220px;
+    scroll-snap-align:start;
+    display:flex;
+    flex-direction:column;
     text-decoration:none;
     border:3px solid var(--orange-4);
     background:linear-gradient(180deg, rgba(255,140,0,0.06), rgba(255,80,0,0.02));
-    padding:16px 72px 16px 18px;
+    padding:16px 18px 40px;
     color:var(--orange-1);
     transition:transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
     position:relative;
@@ -178,74 +192,52 @@
   .post-card::after{
     content:"READ >";
     position:absolute;
-    top:16px;
+    bottom:14px;
     right:18px;
     font-size:14px;
     color:var(--orange-4);
   }
-  .monitor{
-    display:flex;
-    flex-direction:column;
-    align-items:center;
+  .terminal{
     margin-bottom:48px;
-  }
-  .monitor-bezel{
-    position:relative;
-    width:100%;
-    background:linear-gradient(160deg, #4a2e12, #2a1a0c 55%, #170d05);
     border:3px solid var(--orange-4);
-    border-radius:22px;
+    border-radius:10px;
     box-shadow:
       0 0 0 3px #000,
-      0 12px 0 rgba(0,0,0,0.55),
       0 0 30px rgba(255,120,0,0.15);
-    padding:30px 22px 26px;
+    overflow:hidden;
   }
-  .monitor-vents{
-    position:absolute;
-    top:12px;
-    left:50%;
-    transform:translateX(-50%);
+  .terminal-titlebar{
     display:flex;
-    gap:6px;
+    align-items:center;
+    gap:8px;
+    padding:10px 14px;
+    background:linear-gradient(180deg, #4a2e12, #2a1a0c);
+    border-bottom:2px solid var(--orange-dim);
   }
-  .monitor-vents span{
-    width:20px;
-    height:4px;
-    border-radius:2px;
-    background:var(--orange-dim);
+  .terminal-titlebar .dot{
+    width:10px;
+    height:10px;
+    border-radius:50%;
   }
-  .monitor-label{
-    position:absolute;
-    bottom:12px;
-    left:22px;
+  .terminal-titlebar .dot-1{background:var(--orange-5);}
+  .terminal-titlebar .dot-2{background:var(--orange-3);}
+  .terminal-titlebar .dot-3{background:var(--orange-1);}
+  .terminal-title{
+    margin-left:auto;
     font-size:10px;
     color:var(--orange-dim);
     letter-spacing:1px;
   }
-  .monitor-led{
-    position:absolute;
-    bottom:14px;
-    right:22px;
-    width:9px;
-    height:9px;
-    border-radius:50%;
-    background:var(--orange-2);
-    box-shadow:0 0 8px var(--orange-2), 0 0 2px #fff2;
-    animation:blink 2.4s steps(1) infinite;
-  }
-  .monitor-screen{
+  .terminal-screen{
     position:relative;
     background:#050301;
-    border:2px solid #000;
-    border-radius:12px;
     padding:22px 22px 26px;
     overflow:hidden;
     box-shadow:
       inset 0 0 2px 2px var(--orange-dim),
       inset 0 0 50px rgba(255,110,0,0.12);
   }
-  .monitor-screen::before{
+  .terminal-screen::before{
     content:"";
     position:absolute;
     inset:0;
@@ -258,29 +250,15 @@
     );
     pointer-events:none;
   }
-  .monitor-screen::after{
+  .terminal-screen::after{
     content:"";
     position:absolute;
     inset:0;
     box-shadow:inset 0 0 60px rgba(0,0,0,0.85);
-    border-radius:12px;
     pointer-events:none;
   }
-  .monitor-neck{
-    width:64px;
-    height:20px;
-    margin-top:-2px;
-    background:linear-gradient(180deg, #2a1a0c, #170d05);
-    clip-path:polygon(22% 0, 78% 0, 100% 100%, 0% 100%);
-  }
-  .monitor-base{
-    width:180px;
-    height:14px;
-    border-radius:7px;
-    background:linear-gradient(180deg, #2a1a0c, #170d05);
-    box-shadow:0 4px 0 rgba(0,0,0,0.5);
-  }
   .empty-state{
+    flex:1 0 100%;
     text-align:center;
     padding:30px 10px;
     font-size:18px;
@@ -311,23 +289,19 @@
     <div class="tagline">DATA ENGINEERING // FIELD NOTES</div>
   </header>
 
-  <section class="panel">
-    <h2 class="section-title pixel-font">WHOAMI</h2>
-    <div id="bio-text"></div>
-  </section>
-
-  <section class="monitor">
-    <div class="monitor-bezel">
-      <div class="monitor-vents"><span></span><span></span><span></span><span></span></div>
-      <div class="monitor-screen">
-        <h2 class="section-title pixel-font">ARCHIVE.LOG</h2>
-        <ul class="posts-list" id="posts-list"></ul>
-      </div>
-      <div class="monitor-label pixel-font">TERM-01</div>
-      <div class="monitor-led"></div>
+  <section class="terminal">
+    <div class="terminal-titlebar">
+      <span class="dot dot-1"></span>
+      <span class="dot dot-2"></span>
+      <span class="dot dot-3"></span>
+      <span class="terminal-title pixel-font">TERM-01</span>
     </div>
-    <div class="monitor-neck"></div>
-    <div class="monitor-base"></div>
+    <div class="terminal-screen">
+      <h2 class="section-title pixel-font">WHOAMI</h2>
+      <div id="bio-text"></div>
+      <h2 class="section-title pixel-font archive-title">ARCHIVE.LOG</h2>
+      <ul class="posts-list" id="posts-list"></ul>
+    </div>
   </section>
 
   <footer class="pixel-font">
@@ -378,6 +352,13 @@ const bioText = `I'm a data engineer. I spend my time moving data from where it 
 This is where I write up the tools, patterns, and mistakes I pick up along the way.`;
 
 const bioEl = document.getElementById('bio-text');
+
+// Measure the fully-typed text first and lock the box to that height,
+// so the terminal doesn't grow taller as the typewriter fills it in.
+bioEl.textContent = bioText;
+bioEl.style.height = bioEl.scrollHeight + 'px';
+bioEl.textContent = '';
+
 let bioIndex = 0;
 function typeBio(){
   if (bioIndex <= bioText.length){
