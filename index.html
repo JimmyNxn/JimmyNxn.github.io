@@ -123,6 +123,13 @@
   .section-title.archive-title{
     margin-top:28px;
   }
+  .archive-hint{
+    font-size:15px;
+    color:var(--orange-3);
+    letter-spacing:1px;
+    opacity:0.8;
+    margin:-10px 0 16px;
+  }
   .section-title::before{
     content:"> ";
     color:var(--orange-5);
@@ -167,6 +174,7 @@
   }
   .post-card{
     flex:0 0 220px;
+    height:100%;
     scroll-snap-align:start;
     display:flex;
     flex-direction:column;
@@ -178,9 +186,14 @@
     transition:transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
     position:relative;
   }
-  .post-card:hover{
-    transform:translate(-2px,-2px);
-    box-shadow:4px 4px 0 var(--orange-5);
+  @media (hover: hover) and (pointer: fine){
+    .post-card:hover{
+      transform:translate(-2px,-2px);
+      box-shadow:4px 4px 0 var(--orange-5);
+      background:linear-gradient(180deg, rgba(255,140,0,0.14), rgba(255,80,0,0.05));
+    }
+  }
+  .post-card:active{
     background:linear-gradient(180deg, rgba(255,140,0,0.14), rgba(255,80,0,0.05));
   }
   .post-title{
@@ -311,6 +324,7 @@
       <h2 class="section-title pixel-font">WHOAMI</h2>
       <div id="bio-text"></div>
       <h2 class="section-title pixel-font archive-title">ARCHIVE.LOG</h2>
+      <div class="archive-hint">Please click on an archive log to learn more</div>
       <ul class="posts-list" id="posts-list"></ul>
     </div>
   </section>
