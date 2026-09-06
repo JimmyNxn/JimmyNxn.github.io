@@ -1,0 +1,622 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>NIXTRIX // DATA ENGINEERING FIELD NOTES</title>
+<link rel="icon" href="data:," />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --orange-1:#ffb347; /* palest */
+    --orange-2:#ffa500; /* standard */
+    --orange-3:#ff8c00; /* primary */
+    --orange-4:#ff6a00; /* deep */
+    --orange-5:#ff4500; /* accent/hot */
+    --orange-dim:#3a1f00;
+    --bg:#050301;
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0;
+    padding:0;
+    background:var(--bg);
+    color:var(--orange-1);
+    font-family:'VT323', monospace;
+    overflow-x:hidden;
+  }
+  canvas#bg{
+    position:fixed;
+    inset:0;
+    width:100%;
+    height:100%;
+    z-index:0;
+    display:block;
+  }
+  .scanlines{
+    position:fixed;
+    inset:0;
+    z-index:2;
+    pointer-events:none;
+    background:repeating-linear-gradient(
+      to bottom,
+      rgba(0,0,0,0.25) 0px,
+      rgba(0,0,0,0.25) 1px,
+      transparent 2px,
+      transparent 3px
+    );
+    mix-blend-mode:multiply;
+    animation:flicker 6s infinite;
+  }
+  .vignette{
+    position:fixed;
+    inset:0;
+    z-index:2;
+    pointer-events:none;
+    box-shadow:inset 0 0 12vw rgba(0,0,0,0.85);
+  }
+  @keyframes flicker{
+    0%,96%,100%{opacity:1;}
+    97%{opacity:0.85;}
+    98%{opacity:1;}
+    99%{opacity:0.9;}
+  }
+  .wrap{
+    position:relative;
+    z-index:1;
+    max-width:760px;
+    margin:0 auto;
+    padding:6vh 20px 10vh;
+  }
+  .pixel-font{
+    font-family:'Press Start 2P', monospace;
+  }
+  header.hero{
+    text-align:center;
+    padding:6vh 0 4vh;
+  }
+  .boot-line{
+    font-size:14px;
+    letter-spacing:2px;
+    color:var(--orange-3);
+    margin-bottom:18px;
+    opacity:0.85;
+  }
+  h1.title{
+    font-size:clamp(28px, 6vw, 48px);
+    color:var(--orange-2);
+    margin:0 0 14px;
+    text-shadow:
+      3px 3px 0 var(--orange-dim),
+      0 0 18px rgba(255,140,0,0.55);
+    letter-spacing:2px;
+  }
+  .tagline{
+    font-size:20px;
+    color:var(--orange-1);
+    letter-spacing:1px;
+    margin-bottom:26px;
+  }
+  @keyframes blink{
+    0%,49%{opacity:1;}
+    50%,100%{opacity:0.25;}
+  }
+  .panel{
+    background:rgba(10,5,0,0.72);
+    border:3px solid var(--orange-3);
+    box-shadow:0 0 0 3px #000, 0 0 0 6px var(--orange-dim), 0 0 24px rgba(255,120,0,0.15);
+    padding:26px 24px;
+    margin-bottom:48px;
+  }
+  .section-title{
+    font-size:16px;
+    color:var(--orange-2);
+    margin:0 0 18px;
+    letter-spacing:2px;
+  }
+  .section-title::before{
+    content:"> ";
+    color:var(--orange-5);
+  }
+  #bio-text{
+    font-size:22px;
+    line-height:1.55;
+    color:var(--orange-1);
+    white-space:pre-wrap;
+    min-height:150px;
+  }
+  #bio-text::after{
+    content:"_";
+    color:var(--orange-3);
+    animation:blink 1s steps(1) infinite;
+  }
+  #bio-text.done::after{
+    display:none;
+  }
+  .posts-list{
+    list-style:none;
+    margin:0;
+    padding:0;
+    display:flex;
+    flex-direction:column;
+    gap:16px;
+  }
+  .post-card{
+    display:block;
+    text-decoration:none;
+    border:3px solid var(--orange-4);
+    background:linear-gradient(180deg, rgba(255,140,0,0.06), rgba(255,80,0,0.02));
+    padding:16px 72px 16px 18px;
+    color:var(--orange-1);
+    transition:transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
+    position:relative;
+  }
+  .post-card:hover{
+    transform:translate(-2px,-2px);
+    box-shadow:4px 4px 0 var(--orange-5);
+    background:linear-gradient(180deg, rgba(255,140,0,0.14), rgba(255,80,0,0.05));
+  }
+  .post-title{
+    font-size:20px;
+    color:var(--orange-2);
+    margin:0 0 6px;
+  }
+  .post-meta{
+    font-size:15px;
+    color:var(--orange-3);
+    letter-spacing:1px;
+    margin-bottom:8px;
+  }
+  .post-excerpt{
+    font-size:17px;
+    color:var(--orange-1);
+    opacity:0.85;
+    margin:0;
+  }
+  .post-card::after{
+    content:"READ >";
+    position:absolute;
+    top:16px;
+    right:18px;
+    font-size:14px;
+    color:var(--orange-4);
+  }
+  .monitor{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    margin-bottom:48px;
+  }
+  .monitor-bezel{
+    position:relative;
+    width:100%;
+    background:linear-gradient(160deg, #4a2e12, #2a1a0c 55%, #170d05);
+    border:3px solid var(--orange-4);
+    border-radius:22px;
+    box-shadow:
+      0 0 0 3px #000,
+      0 12px 0 rgba(0,0,0,0.55),
+      0 0 30px rgba(255,120,0,0.15);
+    padding:30px 22px 26px;
+  }
+  .monitor-vents{
+    position:absolute;
+    top:12px;
+    left:50%;
+    transform:translateX(-50%);
+    display:flex;
+    gap:6px;
+  }
+  .monitor-vents span{
+    width:20px;
+    height:4px;
+    border-radius:2px;
+    background:var(--orange-dim);
+  }
+  .monitor-label{
+    position:absolute;
+    bottom:12px;
+    left:22px;
+    font-size:10px;
+    color:var(--orange-dim);
+    letter-spacing:1px;
+  }
+  .monitor-led{
+    position:absolute;
+    bottom:14px;
+    right:22px;
+    width:9px;
+    height:9px;
+    border-radius:50%;
+    background:var(--orange-2);
+    box-shadow:0 0 8px var(--orange-2), 0 0 2px #fff2;
+    animation:blink 2.4s steps(1) infinite;
+  }
+  .monitor-screen{
+    position:relative;
+    background:#050301;
+    border:2px solid #000;
+    border-radius:12px;
+    padding:22px 22px 26px;
+    overflow:hidden;
+    box-shadow:
+      inset 0 0 2px 2px var(--orange-dim),
+      inset 0 0 50px rgba(255,110,0,0.12);
+  }
+  .monitor-screen::before{
+    content:"";
+    position:absolute;
+    inset:0;
+    background:repeating-linear-gradient(
+      to bottom,
+      rgba(255,150,0,0.06) 0px,
+      rgba(255,150,0,0.06) 1px,
+      transparent 2px,
+      transparent 4px
+    );
+    pointer-events:none;
+  }
+  .monitor-screen::after{
+    content:"";
+    position:absolute;
+    inset:0;
+    box-shadow:inset 0 0 60px rgba(0,0,0,0.85);
+    border-radius:12px;
+    pointer-events:none;
+  }
+  .monitor-neck{
+    width:64px;
+    height:20px;
+    margin-top:-2px;
+    background:linear-gradient(180deg, #2a1a0c, #170d05);
+    clip-path:polygon(22% 0, 78% 0, 100% 100%, 0% 100%);
+  }
+  .monitor-base{
+    width:180px;
+    height:14px;
+    border-radius:7px;
+    background:linear-gradient(180deg, #2a1a0c, #170d05);
+    box-shadow:0 4px 0 rgba(0,0,0,0.5);
+  }
+  .empty-state{
+    text-align:center;
+    padding:30px 10px;
+    font-size:18px;
+    color:var(--orange-3);
+    letter-spacing:1px;
+  }
+  footer{
+    text-align:center;
+    font-size:15px;
+    color:var(--orange-4);
+    letter-spacing:2px;
+    opacity:0.7;
+    padding-top:10px;
+  }
+</style>
+</head>
+<body>
+
+<canvas id="bg"></canvas>
+<div class="scanlines"></div>
+<div class="vignette"></div>
+
+<div class="wrap">
+
+  <header class="hero">
+    <div class="boot-line pixel-font">SYSTEM ONLINE</div>
+    <h1 class="title pixel-font">NIXTRIX</h1>
+    <div class="tagline">DATA ENGINEERING // FIELD NOTES</div>
+  </header>
+
+  <section class="panel">
+    <h2 class="section-title pixel-font">WHOAMI</h2>
+    <div id="bio-text"></div>
+  </section>
+
+  <section class="monitor">
+    <div class="monitor-bezel">
+      <div class="monitor-vents"><span></span><span></span><span></span><span></span></div>
+      <div class="monitor-screen">
+        <h2 class="section-title pixel-font">ARCHIVE.LOG</h2>
+        <ul class="posts-list" id="posts-list"></ul>
+      </div>
+      <div class="monitor-label pixel-font">TERM-01</div>
+      <div class="monitor-led"></div>
+    </div>
+    <div class="monitor-neck"></div>
+    <div class="monitor-base"></div>
+  </section>
+
+  <footer class="pixel-font">
+    NO SIGNAL BEYOND THIS POINT
+  </footer>
+
+</div>
+
+<script>
+// ---------------------------------------------------------------
+// Add new posts here. Newest first. That's the only edit needed
+// to publish a post on this page.
+// ---------------------------------------------------------------
+const posts = [
+  // {
+  //   title: "Calculating line lengths from OpenStreetMap data",
+  //   date: "2026-01-01",
+  //   url: "https://example.com/post-1",
+  //   excerpt: "Using QGIS + QuickOSM to measure bike lane coverage."
+  // },
+];
+
+const postsList = document.getElementById('posts-list');
+if (posts.length === 0) {
+  postsList.innerHTML = '<li class="empty-state">NO ENTRIES FOUND<br>// CHECK BACK SOON</li>';
+} else {
+  posts.forEach(p => {
+    const li = document.createElement('li');
+    const a = document.createElement('a');
+    a.className = 'post-card';
+    a.href = p.url || '#';
+    a.innerHTML = `
+      <div class="post-title">${p.title}</div>
+      <div class="post-meta">${p.date || ''}</div>
+      <p class="post-excerpt">${p.excerpt || ''}</p>
+    `;
+    li.appendChild(a);
+    postsList.appendChild(li);
+  });
+}
+
+// ---------------------------------------------------------------
+// Typewriter bio
+// ---------------------------------------------------------------
+const bioText = `I'm a data engineer. I spend my time moving data from where it lives to where it's useful — pipelines, warehouses, and the occasional 3am alert.
+
+This is where I write up the tools, patterns, and mistakes I pick up along the way.`;
+
+const bioEl = document.getElementById('bio-text');
+let bioIndex = 0;
+function typeBio(){
+  if (bioIndex <= bioText.length){
+    bioEl.textContent = bioText.slice(0, bioIndex);
+    bioIndex++;
+    setTimeout(typeBio, 18);
+  } else {
+    bioEl.classList.add('done');
+    setTimeout(() => bioEl.classList.remove('done'), 600);
+  }
+}
+typeBio();
+
+// ---------------------------------------------------------------
+// Background: orange matrix rain + drifting asteroid / invader sprites
+// ---------------------------------------------------------------
+const canvas = document.getElementById('bg');
+const ctx = canvas.getContext('2d');
+let W, H;
+function resize(){
+  W = canvas.width = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resize);
+resize();
+
+const orangeShades = ['#ffb347', '#ffa500', '#ff8c00', '#ff6a00', '#ff4500'];
+
+// --- matrix rain ---
+const glyphs = '01▓▒░█/\\<>{}';
+const fontSize = 16;
+let columns, drops;
+function setupRain(){
+  columns = Math.floor(W / fontSize);
+  drops = new Array(columns).fill(0).map(() => Math.random() * -50);
+}
+setupRain();
+window.addEventListener('resize', setupRain);
+
+function drawRain(){
+  ctx.fillStyle = 'rgba(5,3,1,0.15)';
+  ctx.fillRect(0, 0, W, H);
+  ctx.font = fontSize + 'px monospace';
+  for (let i = 0; i < columns; i++){
+    const glyph = glyphs[Math.floor(Math.random() * glyphs.length)];
+    const shade = orangeShades[Math.floor(Math.random() * orangeShades.length)];
+    ctx.fillStyle = shade;
+    ctx.globalAlpha = Math.random() * 0.5 + 0.3;
+    ctx.fillText(glyph, i * fontSize, drops[i] * fontSize);
+    ctx.globalAlpha = 1;
+    if (drops[i] * fontSize > H && Math.random() > 0.975){
+      drops[i] = 0;
+    }
+    drops[i]++;
+  }
+}
+
+// --- blocky asteroids ---
+function makeRockPattern(cells){
+  const grid = [];
+  for (let y = 0; y < cells; y++){
+    const row = [];
+    for (let x = 0; x < cells; x++){
+      const dx = x - cells/2, dy = y - cells/2;
+      const dist = Math.sqrt(dx*dx + dy*dy);
+      row.push(dist < cells/2 * (0.6 + Math.random()*0.4) ? 1 : 0);
+    }
+    grid.push(row);
+  }
+  return grid;
+}
+
+function randVel(){
+  const angle = Math.random() * Math.PI * 2;
+  const speed = 0.15 + Math.random() * 0.35;
+  return { vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed };
+}
+
+const NUM_ROCKS = 9;
+const rocks = new Array(NUM_ROCKS).fill(0).map(() => {
+  const cells = 5 + Math.floor(Math.random() * 4);
+  const block = 4 + Math.floor(Math.random() * 4);
+  const v = randVel();
+  return {
+    x: Math.random() * W,
+    y: Math.random() * H,
+    vx: v.vx,
+    vy: v.vy,
+    rotation: Math.random() * Math.PI * 2,
+    vr: (Math.random() - 0.5) * 0.01,
+    cells,
+    block,
+    pattern: makeRockPattern(cells),
+    color: orangeShades[Math.floor(Math.random() * orangeShades.length)]
+  };
+});
+
+// a small pool of classic arcade-creature bitmaps
+const creatureBitmaps = [
+  // space invader
+  [
+    '00100000100',
+    '00010001000',
+    '00111111100',
+    '01101110110',
+    '11111111111',
+    '10111111101',
+    '10100000101',
+    '00011011000'
+  ],
+  // pac-man style ghost
+  [
+    '00111100',
+    '01111110',
+    '11111111',
+    '11011011',
+    '11111111',
+    '11111111',
+    '11111111',
+    '10101010'
+  ],
+  // ufo saucer
+  [
+    '000111000',
+    '001111100',
+    '111111111',
+    '101010101',
+    '011111110',
+    '000101000'
+  ]
+];
+
+const NUM_INVADERS = 4;
+const invaders = new Array(NUM_INVADERS).fill(0).map(() => {
+  const v = randVel();
+  return {
+    x: Math.random() * W,
+    y: Math.random() * H,
+    vx: v.vx * 0.6,
+    vy: v.vy * 0.6,
+    block: 3 + Math.floor(Math.random() * 2),
+    bitmap: creatureBitmaps[Math.floor(Math.random() * creatureBitmaps.length)],
+    color: orangeShades[Math.floor(Math.random() * orangeShades.length)]
+  };
+});
+
+let mouseX = -9999, mouseY = -9999;
+window.addEventListener('mousemove', e => {
+  mouseX = e.clientX;
+  mouseY = e.clientY;
+});
+window.addEventListener('mouseleave', () => {
+  mouseX = -9999;
+  mouseY = -9999;
+});
+
+function wrap(o){
+  const margin = 100;
+  if (o.x < -margin) o.x = W + margin;
+  if (o.x > W + margin) o.x = -margin;
+  if (o.y < -margin) o.y = H + margin;
+  if (o.y > H + margin) o.y = -margin;
+}
+
+function repel(o){
+  const dx = o.x - mouseX;
+  const dy = o.y - mouseY;
+  const dist = Math.sqrt(dx*dx + dy*dy);
+  const radius = 140;
+  if (dist < radius && dist > 0.01){
+    const force = (radius - dist) / radius * 0.06;
+    o.vx += (dx / dist) * force;
+    o.vy += (dy / dist) * force;
+  }
+  // gentle damping so speeds don't run away
+  o.vx *= 0.995;
+  o.vy *= 0.995;
+}
+
+function drawRocks(){
+  rocks.forEach(r => {
+    repel(r);
+    r.x += r.vx;
+    r.y += r.vy;
+    r.rotation += r.vr;
+    wrap(r);
+
+    ctx.save();
+    ctx.translate(r.x, r.y);
+    ctx.rotate(r.rotation);
+    ctx.fillStyle = r.color;
+    ctx.globalAlpha = 0.75;
+    const offset = (r.cells * r.block) / 2;
+    for (let y = 0; y < r.cells; y++){
+      for (let x = 0; x < r.cells; x++){
+        if (r.pattern[y][x]){
+          ctx.fillRect(x * r.block - offset, y * r.block - offset, r.block - 1, r.block - 1);
+        }
+      }
+    }
+    ctx.globalAlpha = 1;
+    ctx.restore();
+  });
+}
+
+function drawInvaders(){
+  invaders.forEach(inv => {
+    repel(inv);
+    inv.x += inv.vx;
+    inv.y += inv.vy;
+    wrap(inv);
+
+    ctx.save();
+    ctx.translate(inv.x, inv.y);
+    ctx.fillStyle = inv.color;
+    ctx.globalAlpha = 0.8;
+    const rows = inv.bitmap.length;
+    const cols = inv.bitmap[0].length;
+    const offsetX = (cols * inv.block) / 2;
+    const offsetY = (rows * inv.block) / 2;
+    for (let y = 0; y < rows; y++){
+      for (let x = 0; x < cols; x++){
+        if (inv.bitmap[y][x] === '1'){
+          ctx.fillRect(x * inv.block - offsetX, y * inv.block - offsetY, inv.block, inv.block);
+        }
+      }
+    }
+    ctx.globalAlpha = 1;
+    ctx.restore();
+  });
+}
+
+function loop(){
+  drawRain();
+  drawRocks();
+  drawInvaders();
+  requestAnimationFrame(loop);
+}
+loop();
+</script>
+
+</body>
+</html>
