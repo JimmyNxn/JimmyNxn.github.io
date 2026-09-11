@@ -1,0 +1,398 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Why Pandas Should Never Be in Your ETL Pipeline // NIXTRIX</title>
+<link rel="icon" href="data:," />
+<style>
+  @font-face{
+    font-family:'Press Start 2P';
+    font-style:normal;
+    font-weight:400;
+    font-display:swap;
+    src:url('../fonts/press-start-2p-latin.woff2') format('woff2');
+  }
+  @font-face{
+    font-family:'VT323';
+    font-style:normal;
+    font-weight:400;
+    font-display:swap;
+    src:url('../fonts/vt323-latin.woff2') format('woff2');
+  }
+  :root{
+    --orange-1:#ffb347;
+    --orange-2:#ffa500;
+    --orange-3:#ff8c00;
+    --orange-4:#ff6a00;
+    --orange-5:#ff4500;
+    --orange-dim:#3a1f00;
+    --bg:#050301;
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0;
+    padding:0;
+    background:var(--bg);
+    color:var(--orange-1);
+    font-family:'VT323', monospace;
+  }
+  .pixel-font{ font-family:'Press Start 2P', monospace; }
+  .wrap{
+    max-width:760px;
+    margin:0 auto;
+    padding:6vh 20px 10vh;
+  }
+  .back-link{
+    display:inline-block;
+    margin-bottom:32px;
+    color:var(--orange-3);
+    text-decoration:none;
+    letter-spacing:1px;
+    font-size:16px;
+  }
+  .back-link:hover{ color:var(--orange-2); }
+  .terminal{
+    border:3px solid var(--orange-4);
+    border-radius:10px;
+    box-shadow:0 0 0 3px #000, 0 0 30px rgba(255,120,0,0.15);
+    overflow:hidden;
+  }
+  .terminal-titlebar{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    padding:10px 14px;
+    background:linear-gradient(180deg, #4a2e12, #2a1a0c);
+    border-bottom:2px solid var(--orange-dim);
+  }
+  .terminal-titlebar .dot{ width:10px; height:10px; border-radius:50%; }
+  .terminal-titlebar .dot-1{background:var(--orange-5);}
+  .terminal-titlebar .dot-2{background:var(--orange-3);}
+  .terminal-titlebar .dot-3{background:var(--orange-1);}
+  .terminal-title{
+    margin-left:auto;
+    font-size:10px;
+    color:var(--orange-dim);
+    letter-spacing:1px;
+  }
+  .terminal-screen{
+    position:relative;
+    background:#050301;
+    padding:26px 26px 34px;
+    overflow:hidden;
+    box-shadow:
+      inset 0 0 2px 2px var(--orange-dim),
+      inset 0 0 50px rgba(255,110,0,0.12);
+  }
+  .post-header{
+    margin-bottom:28px;
+  }
+  h1.post-title{
+    font-size:clamp(22px, 4.4vw, 30px);
+    color:var(--orange-2);
+    letter-spacing:1px;
+    margin:0 0 10px;
+    line-height:1.3;
+    text-shadow:2px 2px 0 var(--orange-dim);
+  }
+  .post-meta{
+    font-size:16px;
+    color:var(--orange-3);
+    letter-spacing:1px;
+  }
+  article{
+    font-size:21px;
+    line-height:1.6;
+  }
+  article p{
+    margin:0 0 22px;
+  }
+  article strong{ color:var(--orange-2); }
+  article code{
+    font-family:'VT323', monospace;
+    font-size:1.05em;
+    color:var(--orange-2);
+    background:rgba(255,140,0,0.1);
+    padding:1px 6px;
+    border:1px solid var(--orange-dim);
+    border-radius:3px;
+  }
+  article ul{
+    margin:0 0 22px;
+    padding-left:26px;
+  }
+  article li{ margin-bottom:8px; }
+  h2.section-title{
+    font-family:'Press Start 2P', monospace;
+    font-size:14px;
+    color:var(--orange-2);
+    letter-spacing:1px;
+    margin:36px 0 16px;
+  }
+  h2.section-title::before{ content:"> "; color:var(--orange-5); }
+  .summary{
+    background:rgba(255,140,0,0.06);
+    border:2px solid var(--orange-4);
+    border-radius:6px;
+    padding:18px 20px;
+    margin-bottom:32px;
+  }
+  .summary-label{
+    font-family:'Press Start 2P', monospace;
+    font-size:12px;
+    color:var(--orange-3);
+    letter-spacing:1px;
+    margin-bottom:10px;
+  }
+  .summary p{ margin:0 0 14px; font-size:20px; line-height:1.55; }
+  .summary p:last-child{ margin-bottom:0; }
+  article pre{
+    background:#0d0500;
+    border:1px solid var(--orange-dim);
+    border-radius:6px;
+    padding:16px 18px;
+    overflow-x:auto;
+    margin:0 0 22px;
+    font-size:18px;
+    line-height:1.5;
+    color:var(--orange-1);
+  }
+  article pre code{
+    background:none;
+    border:none;
+    padding:0;
+    color:inherit;
+    font-size:1em;
+  }
+  .pre-label{
+    display:block;
+    font-size:13px;
+    letter-spacing:1px;
+    color:var(--orange-4);
+    margin:-10px 0 6px;
+  }
+  .cmp-table{
+    width:100%;
+    border-collapse:collapse;
+    margin:0 0 22px;
+    font-size:18px;
+  }
+  .cmp-table th, .cmp-table td{
+    border:1px solid var(--orange-dim);
+    padding:8px 12px;
+    text-align:left;
+    vertical-align:top;
+  }
+  .cmp-table th{
+    color:var(--orange-2);
+    background:rgba(255,140,0,0.08);
+    font-size:14px;
+    letter-spacing:0.5px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <a class="back-link" href="../index.html">&lt; BACK TO ARCHIVE.LOG</a>
+
+  <div class="terminal">
+    <div class="terminal-titlebar">
+      <span class="dot dot-1"></span>
+      <span class="dot dot-2"></span>
+      <span class="dot dot-3"></span>
+      <span class="terminal-title pixel-font">POST-03</span>
+    </div>
+    <div class="terminal-screen">
+
+      <header class="post-header">
+        <h1 class="post-title pixel-font">WHY PANDAS SHOULD NEVER BE IN YOUR ETL PIPELINE</h1>
+        <div class="post-meta">2026-09-11</div>
+      </header>
+
+      <div class="summary">
+        <div class="summary-label">SUMMARY</div>
+        <p>
+          I reach for pandas constantly. I just never reach for it inside a
+          pipeline. Exploration, plotting, feeding a classic ML model — that
+          is the job it was built for, and nothing else does that job better.
+        </p>
+        <p>
+          For validation, processing, and loading, I want
+          <code>pydantic</code> and <code>dlt</code>. Pandas' great talent is
+          carrying on regardless: wrong dtypes, exploded joins, misaligned
+          indices, all without raising a finger. A pipeline is the one place
+          where carrying on regardless is the bug.
+        </p>
+      </div>
+
+      <article>
+        <h2 class="section-title pixel-font">WHERE PANDAS EARNS ITS KEEP</h2>
+        <p>
+          Credit first. For interactive work, nothing beats it.
+          <code>df.groupby(...).plot()</code> in a notebook. Poking at an
+          unfamiliar CSV until its shape makes sense. Handing a DataFrame
+          straight to <code>scikit-learn</code>'s <code>fit(X, y)</code>.
+          That loop — question, answer, next question — is what pandas was
+          designed for, and it is superb at it. So this isn't an anti-pandas
+          post. It's an anti-pandas-in-production post.
+        </p>
+
+        <h2 class="section-title pixel-font">THE REAL PROBLEM: IT FAILS QUIETLY</h2>
+        <p>
+          A pipeline exists to stop bad data before it reaches a table
+          somebody trusts. Pandas is built on the opposite instinct: keep
+          going, infer something sensible, don't interrupt. In a notebook
+          that's a kindness, because you can see the output. In a pipeline
+          it's how a wrong number lands in a dashboard three joins later
+          without leaving a single line in the logs.
+        </p>
+        <p>Start with dtype coercion. One missing value, and an integer column turns into floats:</p>
+        <span class="pre-label">// python</span>
+        <pre><code>import pandas as pd
+
+df = pd.DataFrame({"id": [1, 2, 3]})
+df.loc[1, "id"] = None
+
+print(df["id"].dtype)
+# float64 — not int64, no warning, no error</code></pre>
+        <p>
+          Every downstream system expecting an integer primary key now gets
+          <code>1.0</code> instead of <code>1</code>. Most of them will find
+          out the hard way.
+        </p>
+        <p>
+          Joins are worse. A duplicate key on one side quietly multiplies
+          rows on the other — no error, no row-count assertion, just more
+          data than you asked for:
+        </p>
+        <span class="pre-label">// python</span>
+        <pre><code>merged = orders.merge(customers, on="customer_id")
+# if customer_id isn't unique in `customers`, orders just got duplicated.
+# merged.shape is bigger than orders.shape. nothing told you.</code></pre>
+        <p>
+          Neither of these raises. Neither turns anything red. You find out
+          when finance asks why revenue is up 12% on last week.
+        </p>
+
+        <h2 class="section-title pixel-font">THE REST OF WHY IT DOESN'T BELONG HERE</h2>
+        <p>
+          Dtypes and joins would be enough on their own. They aren't the
+          only things working against it.
+        </p>
+        <p>
+          <strong>Everything goes into memory.</strong> There is no real
+          streaming model: <code>read_csv</code> and its siblings
+          materialize the entire frame before you can look at a single row.
+          dlt treats data as an iterator instead — rows arrive, get
+          validated, get written, and the full dataset never sits in RAM at
+          once. When a source outgrows the machine, pandas doesn't degrade.
+          It just stops.
+        </p>
+        <p>
+          <strong>"Missing" has four faces.</strong> <code>NaN</code> for
+          floats, <code>None</code> for object columns, <code>NaT</code> for
+          datetimes, <code>pd.NA</code> for the newer nullable dtypes — four
+          spellings of nothing, each behaving a little differently in
+          comparisons and boolean masks (<code>NaN == NaN</code> is
+          <code>False</code>, to start with). Writing one check that answers
+          "is this value missing?" consistently across a real frame's mixed
+          dtypes becomes a small project of its own.
+        </p>
+        <p>
+          <strong>The API fights row-level logic.</strong> Validation is a
+          row-at-a-time problem: look at this record, decide, reject it, say
+          why. Pandas is column-oriented to its core, so that one
+          if-statement turns into a wrestling match with chained indexing
+          and the <code>SettingWithCopyWarning</code> it drags along.
+        </p>
+        <p>And going row by row anyway doesn't rescue you:</p>
+        <span class="pre-label">// python</span>
+        <pre><code>for idx, row in df.iterrows():
+    validate(row)
+# iterrows() boxes every row into a fresh Series, discarding per-column
+# dtypes in the process — on anything but a tiny frame, this is some
+# of the slowest code you can write in pandas</code></pre>
+        <p>
+          Iterating plain dicts — or pydantic models — off a generator costs
+          none of that. No boxing, no dtype loss, and it's the same code
+          path production runs anyway.
+        </p>
+
+        <h2 class="section-title pixel-font">WHERE VALIDATION BELONGS: PYDANTIC</h2>
+        <p>
+          A pipeline should fail loudly, at the boundary, the instant a row
+          stops looking like what you promised — not nurse a NaN through
+          five transform steps and hope. A typed model gives you exactly
+          that:
+        </p>
+        <span class="pre-label">// python</span>
+        <pre><code>from pydantic import BaseModel, ValidationError
+
+class Order(BaseModel):
+    id: int
+    customer_id: int
+    amount: float
+
+try:
+    order = Order(**row)
+except ValidationError as e:
+    logger.error(f"rejected row {row['id']}: {e}")
+    continue</code></pre>
+        <p>
+          No silent coercion, no "close enough." The bad row gets caught,
+          logged with a reason, and kept out of the table — at the point of
+          failure, rather than three dashboards downstream.
+        </p>
+
+        <h2 class="section-title pixel-font">WHERE LOADING BELONGS: DLT</h2>
+        <p>
+          Once a row is valid, loading it is a solved problem — just not one
+          pandas ever set out to solve. <code>to_sql()</code> knows nothing
+          about incremental loads, merge semantics, or schema evolution. dlt
+          knows all three:
+        </p>
+        <span class="pre-label">// python</span>
+        <pre><code>import dlt
+
+@dlt.resource(write_disposition="merge", primary_key="id")
+def orders(updated_at=dlt.sources.incremental("updated_at")):
+    for row in fetch_orders_since(updated_at.last_value):
+        yield Order(**row).model_dump()
+
+pipeline = dlt.pipeline(destination="snowflake", dataset_name="raw_orders")
+pipeline.run(orders())</code></pre>
+        <p>
+          Validate with pydantic, load with dlt, and pandas never touches a
+          row it could quietly mangle.
+        </p>
+
+        <table class="cmp-table">
+          <tr><th></th><th>PANDAS</th><th>PYDANTIC + DLT</th></tr>
+          <tr><td>Bad data</td><td>Coerces silently (NaN, dtype drift)</td><td>Rejects loudly at the boundary</td></tr>
+          <tr><td>Joins</td><td>Can silently multiply rows</td><td>Explicit, typed, no surprise fan-out</td></tr>
+          <tr><td>Missing values</td><td>NaN / None / NaT / pd.NA, each behaving differently</td><td>One concept: the field is missing or it isn't</td></tr>
+          <tr><td>Memory</td><td>Whole dataset materialized upfront</td><td>Streams row by row</td></tr>
+          <tr><td>Row-level logic</td><td><code>iterrows()</code> — slow, boxes every row</td><td>Plain dicts/models, no boxing</td></tr>
+          <tr><td>Schema</td><td>Whatever the data happens to be</td><td>Declared, enforced, versioned</td></tr>
+          <tr><td>Loading</td><td><code>to_sql()</code>, no incremental/merge logic</td><td>Incremental, merge, schema evolution built in</td></tr>
+          <tr><td>Best fit</td><td>Exploration, plotting, classic ML</td><td>Validation, processing, production loads</td></tr>
+        </table>
+
+        <h2 class="section-title pixel-font">TAKEAWAY</h2>
+        <p>
+          Pandas is a scientist's tool: fast, flexible, forgiving. A
+          pipeline needs the opposite of forgiving — it needs to stop dead
+          the moment something is wrong. So keep pandas in the notebook,
+          where forgiving is the entire point. In the pipeline, let pydantic
+          reject what shouldn't pass, and let dlt load what should.
+        </p>
+      </article>
+
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
